@@ -5,21 +5,6 @@ on:
     - "v[0-9]+.[0-9]+.[0-9]+"
 
 jobs:
-  # Explore-GitHub-Actions:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - run: echo "🎉 ou? The job was automatically triggered by a ${{ github.event_name }} event."
-  #     - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
-  #     - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
-  #     - name: Check out repository code
-  #       uses: actions/checkout@v2
-  #     - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
-  #     - run: echo "🖥️ The workflow is now ready to test your code on the runner."
-  #     - name: List files in the repository
-  #       run: |
-  #         ls ${{ github.workspace }}
-  #     - run: echo "🍏 This job's status is ${{ job.status }}."
-
   build_binaries:
     runs-on: ${{ matrix.os }}
     env:
@@ -27,33 +12,32 @@ jobs:
       RUST_BACKTRACE: 1
     strategy:
       matrix:
-        # build: [linux, linux-arm, macos, win-msvc, win-gnu, win32-msvc]
-        build: [linux, macos]
+        build: [linux, linux-arm, macos, win-msvc, win-gnu, win32-msvc]
         include:
         - build: linux
           os: ubuntu-18.04
           rust: nightly
           target: x86_64-unknown-linux-musl
-        # - build: linux-arm
-        #   os: ubuntu-18.04
-        #   rust: nightly
-        #   target: arm-unknown-linux-gnueabihf
+        - build: linux-arm
+          os: ubuntu-18.04
+          rust: nightly
+          target: arm-unknown-linux-gnueabihf
         - build: macos
           os: macos-latest
           rust: nightly
           target: x86_64-apple-darwin
-        # - build: win-msvc
-        #   os: windows-2019
-        #   rust: nightly
-        #   target: x86_64-pc-windows-msvc
-        # - build: win-gnu
-        #   os: windows-2019
-        #   rust: nightly-x86_64-gnu
-        #   target: x86_64-pc-windows-gnu
-        # - build: win32-msvc
-        #   os: windows-2019
-        #   rust: nightly
-        #   target: i686-pc-windows-msvc
+        - build: win-msvc
+          os: windows-2019
+          rust: nightly
+          target: x86_64-pc-windows-msvc
+        - build: win-gnu
+          os: windows-2019
+          rust: nightly-x86_64-gnu
+          target: x86_64-pc-windows-gnu
+        - build: win32-msvc
+          os: windows-2019
+          rust: nightly
+          target: i686-pc-windows-msvc
     steps:
     - name: Checkout
       uses: actions/checkout@v2
@@ -81,20 +65,16 @@ jobs:
     - name: Check results
       shell: bash
       run: |
+        ls -l
         echo "TARGET_DIR is: $TARGET_DIR"
         ls -l $TARGET_DIR
-        ls -l ./
-        ls -l ./target/
-        ls -l ./target/*
-        ls -l ./target/**/*
     - name: Retrieve version and change the binary name
       shell: bash
       run: |
         # to use the envvar in this step
         BINARY_VERSION=${GITHUB_REF#refs/tags/}
         # to use the envvar in subsequent steps
-        echo "BINARY_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-
+        echo "BINARY_VERSION=${BINARY_VERSION}" >> $GITHUB_ENV
         echo "BINARY_VERSION from github workflow env dot: ${{ env.BINARY_VERSION }}"
         echo "BINARY_VERSION from bash env var: $BINARY_VERSION"
         mv ${{ env.TARGET_DIR }}/release/tergrrs \
