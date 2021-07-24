@@ -64,7 +64,6 @@ jobs:
         profile: minimal
         override: true
         target: ${{ matrix.target }}
-   # https://github.com/rust-embedded/cross
    - name: Install and configure cross
      shell: bash
      run: |
