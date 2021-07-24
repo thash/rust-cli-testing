@@ -64,13 +64,13 @@ jobs:
         profile: minimal
         override: true
         target: ${{ matrix.target }}
-   - name: Install and configure cross
-     shell: bash
-     run: |
-       cargo install cross
-       echo "CARGO=cross" >> $GITHUB_ENV
-       echo "TARGET_FLAGS=--target ${{ matrix.target }}" >> $GITHUB_ENV
-       echo "TARGET_DIR=./target/${{ matrix.target }}" >> $GITHUB_ENV
+    - name: Install and configure cross
+      shell: bash
+      run: |
+        cargo install cross
+        echo "CARGO=cross" >> $GITHUB_ENV
+        echo "TARGET_FLAGS=--target ${{ matrix.target }}" >> $GITHUB_ENV
+        echo "TARGET_DIR=./target/${{ matrix.target }}" >> $GITHUB_ENV
     - name: Check configurations for Cargo
       run: |
         echo "cargo command is: ${{ env.CARGO }}"
