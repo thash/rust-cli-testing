@@ -28,10 +28,10 @@ jobs:
       fail-fast: false
       matrix:
         target: [x86_64-pc-windows-gnu, x86_64-unknown-linux-musl]
-      steps:
-        - uses: actions/checkout@v2
-        - name: Rust Release binary
-          uses: rust-build/rust-build.action@v1.0.3
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            RUSTTARGET: ${{ matrix.target }}
+    steps:
+    - uses: actions/checkout@v2
+    - name: Rust Release binary
+      uses: rust-build/rust-build.action@v1.0.3
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        RUSTTARGET: ${{ matrix.target }}
