@@ -80,7 +80,7 @@ jobs:
       # run: ${{ env.CARGO }} build --verbose --release ${{ env.TARGET_FLAGS }}
       run: |
         mkdir -p ${{ env.TARGET_DIR }}/release
-        echo 'hi' > ${{ env.TARGET_DIR }}/release/tergrrs
+        echo "hi this is on ${{ matrix.target }}" > ${{ env.TARGET_DIR }}/release/tergrrs
     - name: Check results
       shell: bash
       run: |
@@ -90,12 +90,18 @@ jobs:
         ls -l ./target/
         ls -l ./target/*
         ls -l ./target/**/*
+    - name: Change the binary name
+      shell: bash
+      run: |
+        echo "BINARY_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+        echo "BINARY_VERSION is: ${{ env.BINARY_VERSION }}"
+        mv ${{ env.TARGET_DIR }}/release/tergrrs \
+           ./tergrrs-${{ env.BINARY_VERSION }}-${{ matrix.target }}
     - name: Store the built binary as an artifact
       uses: actions/upload-artifact@v2
       with:
-        name: tergrrs-VERSION_HERE-MATRIX_TARGET
-        path: |
-          ${{ env.TARGET_DIR }}/release/tergrrs
+        name: tergrrs-binaries
+        path: ./tergrrs-${{ env.BINARY_VERSION }}-${{ matrix.target }}
 
   create-github-release:
     runs-on: ubuntu-latest
@@ -106,12 +112,15 @@ jobs:
     - name: Check workspace before download
       shell: bash
       run: |
+        env
+        echo "hiiiiiiiiiiiii: ${{ env.BINARY_VERSION }}"
+        echo "hiiiiname: ${{ env.BINARY_NAME }}"
         ls -l
         ls -l *
     - name: Download stored on GitHub artifacts
       uses: actions/download-artifact@v2
       with:
-        name: tergrrs-VERSION_HERE-MATRIX_TARGET
+        name: tergrrs-binaries
     - name: Check downloaded binaries
       shell: bash
       run: |
