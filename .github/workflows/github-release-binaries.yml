@@ -67,10 +67,8 @@ jobs:
     - name: Install and configure cross
       shell: bash
       run: |
-        ### skip for now ### cargo install cross
-        ## instead.....
-        echo "CARGO=cargo" >> $GITHUB_ENV
-        ### skip for now ### echo "CARGO=cross" >> $GITHUB_ENV
+        cargo install cross
+        echo "CARGO=cross" >> $GITHUB_ENV
         echo "TARGET_FLAGS=--target ${{ matrix.target }}" >> $GITHUB_ENV
         echo "TARGET_DIR=./target/${{ matrix.target }}" >> $GITHUB_ENV
     - name: Check configurations for Cargo
@@ -78,11 +76,8 @@ jobs:
         echo "cargo command is: ${{ env.CARGO }}"
         echo "target flag is: ${{ env.TARGET_FLAGS }}"
         echo "target dir is: ${{ env.TARGET_DIR }}"
-    - name: Build release binary (DUMMY)
-      # run: ${{ env.CARGO }} build --verbose --release ${{ env.TARGET_FLAGS }}
-      run: |
-        mkdir -p ${{ env.TARGET_DIR }}/release
-        echo "hi this is on ${{ matrix.target }}" > ${{ env.TARGET_DIR }}/release/tergrrs
+    - name: Build release binary
+      run: ${{ env.CARGO }} build --verbose --release ${{ env.TARGET_FLAGS }}
     - name: Check results
       shell: bash
       run: |
@@ -99,8 +94,6 @@ jobs:
         BINARY_VERSION=${GITHUB_REF#refs/tags/}
         # to use the envvar in subsequent steps
         echo "BINARY_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-        # to use the binary version in another job (that needs this job) via uploading the text file as an artifact
-        echo $BINARY_VERSION > BINARY_VERSION.txt
 
         echo "BINARY_VERSION from github workflow env dot: ${{ env.BINARY_VERSION }}"
         echo "BINARY_VERSION from bash env var: $BINARY_VERSION"
@@ -112,12 +105,6 @@ jobs:
         ls -l
         echo "BINARY_VERSION from github workflow env dot: ${{ env.BINARY_VERSION }}"
         echo "BINARY_VERSION from bash env var: $BINARY_VERSION"
-    - name: Store the binary version as an artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: binary-version
-        if-no-files-found: error
-        path: BINARY_VERSION.txt
     - name: Store the built binary as an artifact
       uses: actions/upload-artifact@v2
       with:
@@ -140,17 +127,10 @@ jobs:
       uses: actions/download-artifact@v2
       with:
         name: tergrrs-binaries
-    - name: Download the version number to release on GitHub artifacts
-      uses: actions/download-artifact@v2
-      with:
-        name: binary-version
     - name: Check downloaded binaries and matrix
       shell: bash
       run: |
         ls -l
-        echo "${{ needs }}"
-        echo "${{ needs.build_binaries }}"
-        echo "${{ needs.build_binaries.matrix }}"
     - name: Release
       uses: softprops/action-gh-release@v1
       if: startsWith( github.ref, 'refs/tags/v' )
