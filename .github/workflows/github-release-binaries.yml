@@ -62,12 +62,6 @@ jobs:
         echo "target dir is: ${{ env.TARGET_DIR }}"
     - name: Build release binary
       run: ${{ env.CARGO }} build --verbose --release ${{ env.TARGET_FLAGS }}
-    - name: Check results
-      shell: bash
-      run: |
-        ls -l
-        echo "TARGET_DIR is: $TARGET_DIR"
-        ls -l $TARGET_DIR
     - name: Retrieve version and change the binary name
       shell: bash
       run: |
@@ -76,15 +70,15 @@ jobs:
         # to use the envvar in subsequent steps
         echo "BINARY_VERSION=${BINARY_VERSION}" >> $GITHUB_ENV
         echo "BINARY_VERSION from github workflow env dot: ${{ env.BINARY_VERSION }}"
-        echo "BINARY_VERSION from bash env var: $BINARY_VERSION"
+        echo "BINARY_VERSION from bash env var: ${BINARY_VERSION}"
         mv ${{ env.TARGET_DIR }}/release/tergrrs \
            ${{ env.TARGET_DIR }}/release/tergrrs-${BINARY_VERSION}-${{ matrix.target }}
-    - name: Check results 2 - result of mv command
+    - name: Check target/${{ matrix.target }}/release/
       shell: bash
       run: |
-        ls -l
         echo "BINARY_VERSION from github workflow env dot: ${{ env.BINARY_VERSION }}"
         echo "BINARY_VERSION from bash env var: $BINARY_VERSION"
+        ls -l $TARGET_DIR/release/
     - name: Store the built binary as an artifact
       uses: actions/upload-artifact@v2
       with:
@@ -98,11 +92,6 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v2
-    - name: Check workspace before download
-      shell: bash
-      run: |
-        env
-        ls -l
     - name: Download stored artifacts (binaries) on GitHub artifacts
       uses: actions/download-artifact@v2
       with:
