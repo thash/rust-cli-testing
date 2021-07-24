@@ -2,7 +2,7 @@ name: Wei GitHub Actions Demo
 on:
   push:
     branches:
-    - master
+    - main
     tags:
     - "v[0-9]+.[0-9]+.[0-9]+"
 jobs:
