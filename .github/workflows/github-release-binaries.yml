@@ -78,7 +78,7 @@ jobs:
         echo "BINARY_VERSION from github workflow env dot: ${{ env.BINARY_VERSION }}"
         echo "BINARY_VERSION from bash env var: $BINARY_VERSION"
         mv ${{ env.TARGET_DIR }}/release/tergrrs \
-           ./tergrrs-${BINARY_VERSION}-${{ matrix.target }}
+           ${{ env.TARGET_DIR }}/release/tergrrs-${BINARY_VERSION}-${{ matrix.target }}
     - name: Check results 2 - result of mv command
       shell: bash
       run: |
@@ -90,7 +90,7 @@ jobs:
       with:
         name: tergrrs-binaries
         if-no-files-found: error
-        path: ./tergrrs-${{ env.BINARY_VERSION }}-${{ matrix.target }}
+        path: ${{ env.TARGET_DIR }}/release/tergrrs-*
 
   create_github_release:
     runs-on: ubuntu-latest
