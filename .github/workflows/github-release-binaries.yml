@@ -85,11 +85,11 @@ jobs:
       shell: bash
       run: |
         echo "TARGET_DIR is: $TARGET_DIR"
-        ls -la $TARGET_DIR
-        ls -la ./
-        ls -la ./target/
-        ls -la ./target/*
-        ls -la ./target/**/*
+        ls -l $TARGET_DIR
+        ls -l ./
+        ls -l ./target/
+        ls -l ./target/*
+        ls -l ./target/**/*
     - name: Store the built binary as an artifact
       uses: actions/upload-artifact@v2
       with:
@@ -103,10 +103,20 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v2
+    - name: Check workspace before download
+      shell: bash
+      run: |
+        ls -l
+        ls -l *
     - name: Download stored on GitHub artifacts
       uses: actions/download-artifact@v2
       with:
         name: tergrrs-VERSION_HERE-MATRIX_TARGET
+    - name: Check downloaded binaries
+      shell: bash
+      run: |
+        ls -l
+        ls -l *
     - name: Release
       uses: softprops/action-gh-release@v1
       if: startsWith( github.ref, 'refs/tags/v' )
@@ -114,4 +124,4 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         files: |
-          tergrrs-VERSION_HERE-MATRIX_TARGET
+          tergrrs
