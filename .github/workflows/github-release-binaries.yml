@@ -94,9 +94,14 @@ jobs:
       shell: bash
       run: |
         echo "BINARY_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-        echo "BINARY_VERSION is: ${{ env.BINARY_VERSION }}"
+        echo "BINARY_VERSION from github workflow env dot: ${{ env.BINARY_VERSION }}"
+        echo "BINARY_VERSION from bash env var: $BINARY_VERSION"
         mv ${{ env.TARGET_DIR }}/release/tergrrs \
-           ./tergrrs-${{ env.BINARY_VERSION }}-${{ matrix.target }}
+           ./tergrrs-${BINARY_VERSION}-${{ matrix.target }}
+    - name: Check results 2 - result of mv command
+      shell: bash
+      run: |
+        ls -l
     - name: Store the built binary as an artifact
       uses: actions/upload-artifact@v2
       with:
