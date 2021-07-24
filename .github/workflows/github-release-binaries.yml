@@ -76,8 +76,11 @@ jobs:
         echo "cargo command is: ${{ env.CARGO }}"
         echo "target flag is: ${{ env.TARGET_FLAGS }}"
         echo "target dir is: ${{ env.TARGET_DIR }}"
-    - name: Build release binary
-      run: ${{ env.CARGO }} build --verbose --release ${{ env.TARGET_FLAGS }}
+    - name: Build release binary (DUMMY)
+      # run: ${{ env.CARGO }} build --verbose --release ${{ env.TARGET_FLAGS }}
+      run: |
+        mkdir -p ${{ env.TARGET_DIR }}/release
+        echo 'hi' > ${{ env.TARGET_DIR }}/release/tergrrs
     - name: Check results
       shell: bash
       run: |
@@ -92,7 +95,7 @@ jobs:
       with:
         name: tergrrs-VERSION_HERE-MATRIX_TARGET
         path: |
-          $TARGET_DIR/release/tergrrs
+          ${{ env.TARGET_DIR }}/release/tergrrs
 
   create-github-release:
     runs-on: ubuntu-latest
