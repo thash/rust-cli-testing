@@ -96,7 +96,7 @@ jobs:
       shell: bash
       run: |
         # to use the envvar in this step
-        BINARY_VERSION=${GITHUB_REF#refs/tags/
+        BINARY_VERSION=${GITHUB_REF#refs/tags/}
         # to use the envvar in subsequent steps
         echo "BINARY_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
         # to use the binary version in another job (that needs this job) via uploading the text file as an artifact
@@ -135,8 +135,6 @@ jobs:
       shell: bash
       run: |
         env
-        echo "hiiiiiiiiiiiii: ${{ env.BINARY_VERSION }}"
-        echo "hiiiiname: ${{ env.BINARY_NAME }}"
         ls -l
     - name: Download stored artifacts (binaries) on GitHub artifacts
       uses: actions/download-artifact@v2
