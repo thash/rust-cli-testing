@@ -3,8 +3,9 @@ on:
   push:
     branches:
     - main
-    tags:
-    - "v[0-9]+.[0-9]+.[0-9]+"
+    # tags:
+    # - "v[0-9]+.[0-9]+.[0-9]+"
+
 jobs:
   Explore-GitHub-Actions:
     runs-on: ubuntu-latest
@@ -21,17 +22,27 @@ jobs:
           ls ${{ github.workspace }}
       - run: echo "🍏 This job's status is ${{ job.status }}."
 
-  release-binaries:
-    name: ${{ matrix.target }}
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        target: [x86_64-pc-windows-gnu, x86_64-unknown-linux-musl]
+  # release-binaries-by-rust-build:
+  #   name: ${{ matrix.target }}
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       target: [x86_64-pc-windows-gnu, x86_64-unknown-linux-musl]
+  #   steps:
+  #   - uses: actions/checkout@v2
+  #   - name: Rust Release binary
+  #     uses: rust-build/rust-build.action@v1.0.3
+  #     env:
+  #       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       RUSTTARGET: ${{ matrix.target }}
+
+  build:
+    runs-on: ubuntu-lateset
     steps:
-    - uses: actions/checkout@v2
-    - name: Rust Release binary
-      uses: rust-build/rust-build.action@v1.0.3
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        RUSTTARGET: ${{ matrix.target }}
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
