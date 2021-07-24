@@ -38,7 +38,7 @@ jobs:
   #       RUSTTARGET: ${{ matrix.target }}
 
   build:
-    runs-on: ubuntu-lateset
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v2
