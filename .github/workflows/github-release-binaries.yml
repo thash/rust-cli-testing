@@ -96,16 +96,16 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
     - name: Create release version tag
-        uses: actions/github-script@v3
-        with:
-          github-token: ${{ github.token }}
-          script: |
-            github.git.createRef({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: "refs/tags/v${{ env.CLI_VERSION }}",
-              sha: context.sha
-            })
+      uses: actions/github-script@v3
+      with:
+        github-token: ${{ github.token }}
+        script: |
+          github.git.createRef({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            ref: "refs/tags/v${{ env.CLI_VERSION }}",
+            sha: context.sha
+          })
 
   create_github_release:
     runs-on: ubuntu-latest
