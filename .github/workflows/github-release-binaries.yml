@@ -18,13 +18,13 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
     - run: |
-      echo ${{ github }}
-      echo ${{ github.event }}
-      echo ${{ github.event.pull_request }}
-      echo ${{ github.event.pull_request.title }}
-      echo "------"
-      echo ${{ github.event.push }}
-      exit 1
+        echo ${{ github }}
+        echo ${{ github.event }}
+        echo ${{ github.event.pull_request }}
+        echo ${{ github.event.pull_request.title }}
+        echo "------"
+        echo ${{ github.event.push }}
+        exit 1
   build_binaries:
     runs-on: ${{ matrix.os }}
     needs: [check_if_release_pull_request]
