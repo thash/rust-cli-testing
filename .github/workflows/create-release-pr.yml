@@ -31,8 +31,8 @@ jobs:
         # if [[ ${{ github.event.inputs.new_release_version }} == ${{ env.CURRENT_CLI_VERSION }} ]]; then exit 1; fi
     - name: Check versions defined in Cargo.*
       run: |
-      grep -e "^version = " Cargo.toml
-      grep -A 2 ${{ env.PROJECT_NAME }} Cargo.lock
+        grep -e "^version = " Cargo.toml
+        grep -A 2 ${{ env.PROJECT_NAME }} Cargo.lock
     - name: Replace Cargo.toml version to ${{ github.event.inputs.new_release_version }}
       run: |
         sed -i -e 's/^version = "[0-9]\+\.[0-9]\+\.[0-9]\+"/version = "${{ github.event.inputs.new_release_version }}"/' Cargo.toml
@@ -43,5 +43,5 @@ jobs:
         args: --release
     - name: Check versions defined in Cargo.*
       run: |
-      grep -e "^version = " Cargo.toml
-      grep -A 2 ${{ env.PROJECT_NAME }} Cargo.lock
+        grep -e "^version = " Cargo.toml
+        grep -A 2 ${{ env.PROJECT_NAME }} Cargo.lock
