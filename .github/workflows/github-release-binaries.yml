@@ -87,7 +87,7 @@ jobs:
       with:
         name: cli-binaries
         if-no-files-found: error
-        path: ${{ env.TARGET_DIR }}/release/tergrrs-v${{ env.CLI_VERSION }-*
+        path: ${{ env.TARGET_DIR }}/release/tergrrs-v${{ env.CLI_VERSION }}-*
 
   create_release_tag:
     runs-on: ubuntu-latest
