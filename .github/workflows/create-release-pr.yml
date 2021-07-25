@@ -1,0 +1,28 @@
+name: Create New Release PR
+on:
+  workflow_dispatch:
+    # https://docs.github.com/en/webhooks/event-payloads/#workflow_dispatch
+    inputs:
+      new_release_version:
+        description: New version number to release (e.g. 0.1.23)
+        required: true
+
+jobs:
+  create_pull_request:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Retrieve CLI_VERSION from Cargo.toml
+      shell: bash
+      run: |
+        CLI_VERSION=$(grep "version =" Cargo.toml | sed -e 's/.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/g')
+        echo "CLI_VERSION retrieved from Cargo.toml is: ${CLI_VERSION}"
+        # set for subsequent steps
+        echo "CLI_VERSION=${CLI_VERSION}" >> $GITHUB_ENV
+    - name: confirm version match
+      shell: bash
+      run: |
+        echo "Hello, version ${{ github.event.inputs.new_release_version }}!"
+  
+  
