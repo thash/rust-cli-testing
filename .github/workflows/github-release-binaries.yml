@@ -33,9 +33,19 @@ jobs:
           console.log(context);
           return context.payload.commits[0].message
 
-    - run: |
+    - name: Check if the (latest) commit is release version up commit
+      shell: bash
+      run: |
         echo "${{ steps.myscript.outputs.result }}"
-        # check if the commit message is "Bump" merged commit or not.
+        echo $?
+        # if [[ ${{ steps.myscript.outputs.result }} =~ [workflow] Bump version to v =  ]]; then
+        [[ ${{ steps.myscript.outputs.result }} =~ workflow ]]
+        echo $?
+        if [[ ${{ steps.myscript.outputs.result }} =~ workflow ]]; then
+          echo "commit message match"
+        else
+          exit 1
+        fi
         exit 0
 
   build_binaries:
