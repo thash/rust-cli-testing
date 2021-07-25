@@ -18,18 +18,31 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
     - uses: actions/github-script@v3
+      id: myscript
       with:
         github-token: ${{ github.token }}
+        debug: true
         script: |
-          console.log(JSON.stringify(github, null, 2));
-          console.log(JSON.stringify(github.git, null, 2));
+          // console.log(JSON.stringify(github, null, 2));
+
+          // console.log(JSON.stringify(github.git, null, 2));
           // => {}
           // console.log(JSON.stringify(github.event, null, 2));
           // => undefined
-          console.log(JSON.stringify(context, null, 2)); // https://github.com/actions/toolkit/blob/main/packages/github/src/context.ts
-          console.log(JSON.stringify(context.payload, null, 2));
+
+          // "context" https://github.com/actions/toolkit/blob/main/packages/github/src/context.ts
+          console.log(JSON.stringify(context.eventName, null, 2));
+          console.log(JSON.stringify(context.ref, null, 2));
+          console.log(JSON.stringify(context.sha, null, 2));
+          console.log(JSON.stringify(context.payload.commits, null, 2));
+          console.log("---------duuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuump---------")
+          console.log(context);
+          return context.payload.commits[0].message
+
     - run: |
+        echo "${{ steps.myscript.outputs.result }}"
         exit 1
+
   build_binaries:
     runs-on: ${{ matrix.os }}
     needs: [check_if_release_pull_request]
