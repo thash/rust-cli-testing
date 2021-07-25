@@ -21,7 +21,9 @@ jobs:
       with:
         github-token: ${{ github.token }}
         script: |
-          console.log(JSON.stringify(github.event, null, 2));
+          console.log(JSON.stringify(github, null, 2));
+          // console.log(JSON.stringify(github.event, null, 2));
+          // => undefined
     - run: |
         exit 1
   build_binaries:
