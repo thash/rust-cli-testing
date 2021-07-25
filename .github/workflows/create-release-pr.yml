@@ -11,7 +11,7 @@ env:
   PROJECT_NAME: tergrrs
 
 jobs:
-  create_pull_request:
+  update_cargo_files_and_create_pull_request:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
@@ -31,8 +31,8 @@ jobs:
         # if [[ ${{ github.event.inputs.new_release_version }} == ${{ env.CURRENT_CLI_VERSION }} ]]; then exit 1; fi
     - name: Check versions defined in Cargo.*
       run: |
-        grep -e "^version = " Cargo.toml
-        grep -A 2 ${{ env.PROJECT_NAME }} Cargo.lock
+        echo "Cargo.toml: "; grep -e "^version = " Cargo.toml
+        echo "Cargo.lock: "; grep -A 2 ${{ env.PROJECT_NAME }} Cargo.lock
     - name: Replace Cargo.toml version to ${{ github.event.inputs.new_release_version }}
       run: |
         sed -i -e 's/^version = "[0-9]\+\.[0-9]\+\.[0-9]\+"/version = "${{ github.event.inputs.new_release_version }}"/' Cargo.toml
@@ -43,5 +43,17 @@ jobs:
         args: --release
     - name: Check versions defined in Cargo.*
       run: |
-        grep -e "^version = " Cargo.toml
-        grep -A 2 ${{ env.PROJECT_NAME }} Cargo.lock
+        echo "Cargo.toml: "; grep -e "^version = " Cargo.toml
+        echo "Cargo.lock: "; grep -A 2 ${{ env.PROJECT_NAME }} Cargo.lock
+    # - name: Create a new release-candidate (bump) branch
+    # - name: Checkout the release-candidate (bump) branch
+    #   uses: actions/checkout@v2
+    # - name: Create and checkout to a new release-candidate (bump) branch
+    # - name: Commit changes on the release-candidate (bump) branch
+    - name: Create Pull Request
+      id: create_pull_request
+      uses: peter-evans/create-pull-request@v3
+    - name: Check outputs of the created Pull Request
+        run: |
+          echo "Pull Request Number - ${{ steps.create_pull_request.outputs.pull-request-number }}"
+          echo "Pull Request URL - ${{ steps.create_pull_request.outputs.pull-request-url }}"

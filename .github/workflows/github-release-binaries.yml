@@ -1,5 +1,5 @@
 on:
-  # TODO: "invoke only when the commit is created through version up PR"
+  # TODO: "invoke only when the commit is created through version up PR" ... check latest commit message?
   # pull_request:
   push:
     # direct push to the main branch should be protected by a rule. Expecting PR is made to change main, including release.
