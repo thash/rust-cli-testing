@@ -16,32 +16,33 @@ jobs:
       RUST_BACKTRACE: 1
     strategy:
       matrix:
-        build: [linux, linux-arm, macos, win-msvc, win-gnu, win32-msvc]
+        # build: [linux, linux-arm, macos, win-msvc, win-gnu, win32-msvc]
+        build: [linux]
         include:
         - build: linux
           os: ubuntu-18.04
           rust: nightly
           target: x86_64-unknown-linux-musl
-        - build: linux-arm
-          os: ubuntu-18.04
-          rust: nightly
-          target: arm-unknown-linux-gnueabihf
-        - build: macos
-          os: macos-latest
-          rust: nightly
-          target: x86_64-apple-darwin
-        - build: win-msvc
-          os: windows-2019
-          rust: nightly
-          target: x86_64-pc-windows-msvc
-        - build: win-gnu
-          os: windows-2019
-          rust: nightly-x86_64-gnu
-          target: x86_64-pc-windows-gnu
-        - build: win32-msvc
-          os: windows-2019
-          rust: nightly
-          target: i686-pc-windows-msvc
+        # - build: linux-arm
+        #   os: ubuntu-18.04
+        #   rust: nightly
+        #   target: arm-unknown-linux-gnueabihf
+        # - build: macos
+        #   os: macos-latest
+        #   rust: nightly
+        #   target: x86_64-apple-darwin
+        # - build: win-msvc
+        #   os: windows-2019
+        #   rust: nightly
+        #   target: x86_64-pc-windows-msvc
+        # - build: win-gnu
+        #   os: windows-2019
+        #   rust: nightly-x86_64-gnu
+        #   target: x86_64-pc-windows-gnu
+        # - build: win32-msvc
+        #   os: windows-2019
+        #   rust: nightly
+        #   target: i686-pc-windows-msvc
     steps:
     - name: Checkout
       uses: actions/checkout@v2
@@ -66,22 +67,20 @@ jobs:
         echo "target dir is: ${{ env.TARGET_DIR }}"
     - name: Build release binary
       run: ${{ env.CARGO }} build --verbose --release ${{ env.TARGET_FLAGS }}
-    - name: Retrieve version and change the binary name
+    - name: Retrieve CLI_VERSION from Cargo.toml
       shell: bash
       run: |
-        # to use the envvar in this step
-        BINARY_VERSION=${GITHUB_REF#refs/tags/}
-        # to use the envvar in subsequent steps
-        echo "BINARY_VERSION=${BINARY_VERSION}" >> $GITHUB_ENV
-        echo "BINARY_VERSION from github workflow env dot: ${{ env.BINARY_VERSION }}"
-        echo "BINARY_VERSION from bash env var: ${BINARY_VERSION}"
+        CLI_VERSION=$(grep "version =" Cargo.toml | sed -e 's/.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/g')
+        echo "CLI_VERSION=${CLI_VERSION}" >> $GITHUB_ENV
+        echo "CLI_VERSION retrieved from Cargo.toml is: ${CLI_VERSION}"
+    - name: Append CLI_VERSION and build target to the binary name
+      shell: bash
+      run: |
         mv ${{ env.TARGET_DIR }}/release/tergrrs \
-           ${{ env.TARGET_DIR }}/release/tergrrs-${BINARY_VERSION}-${{ matrix.target }}
+           ${{ env.TARGET_DIR }}/release/tergrrs-${{ env.CLI_VERSION }}-${{ matrix.target }}
     - name: Check target/${{ matrix.target }}/release/
       shell: bash
       run: |
-        echo "BINARY_VERSION from github workflow env dot: ${{ env.BINARY_VERSION }}"
-        echo "BINARY_VERSION from bash env var: $BINARY_VERSION"
         ls -l $TARGET_DIR/release/
     - name: Store the built binary as an artifact
       uses: actions/upload-artifact@v2
