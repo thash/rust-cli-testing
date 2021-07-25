@@ -1,4 +1,4 @@
-name: Create New Release PR
+name: Bump Cargo files and create new release PR
 on:
   workflow_dispatch:
     # https://docs.github.com/en/webhooks/event-payloads/#workflow_dispatch
@@ -6,6 +6,9 @@ on:
       new_release_version:
         description: New version number to release (e.g. 0.1.23)
         required: true
+
+env:
+  PROJECT_NAME: tergrrs
 
 jobs:
   create_pull_request:
@@ -16,14 +19,21 @@ jobs:
     - name: Retrieve CLI_VERSION from Cargo.toml
       shell: bash
       run: |
-        CLI_VERSION=$(grep "version =" Cargo.toml | sed -e 's/.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/g')
-        echo "CLI_VERSION retrieved from Cargo.toml is: ${CLI_VERSION}"
+        CURRENT_CLI_VERSION=$(grep "version =" Cargo.toml | sed -e 's/.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/g')
+        echo "CURRENT_CLI_VERSION retrieved from Cargo.toml is: ${CURRENT_CLI_VERSION}"
         # set for subsequent steps
-        echo "CLI_VERSION=${CLI_VERSION}" >> $GITHUB_ENV
-    - name: confirm version match
+        echo "CURRENT_CLI_VERSION=${CURRENT_CLI_VERSION}" >> $GITHUB_ENV
+    - name: Confirm version change
       shell: bash
       run: |
-        echo "Manually entered version: ${{ github.event.inputs.new_release_version }}"
-        echo "Cargo.toml contains version: ${{ github.event.inputs.new_release_version }}!"
-        if [[ ${{ github.event.inputs.new_release_version }} != ${{ env.CLI_VERSION }} ]]; then exit 1; fi
+        echo "Cargo.toml contains current version: ${{ env.CURRENT_CLI_VERSION }}."
+        echo "... will be updated to the manually entered new version: ${{ github.event.inputs.new_release_version }}."
+        # if [[ ${{ github.event.inputs.new_release_version }} == ${{ env.CURRENT_CLI_VERSION }} ]]; then exit 1; fi
+    - run: grep -A 2 ${{ env.PROJECT_NAME }} Cargo.lock
+    - name: Execute cargo build to update Cargo.lock
+      uses: actions-rs/cargo@v1
+      with:
+        command: build
+        args: --release
+    - run: grep -A 2 ${{ env.PROJECT_NAME }} Cargo.lock
   
