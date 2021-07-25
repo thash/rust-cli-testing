@@ -18,29 +18,24 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
     - uses: actions/github-script@v3
+      # see details /docs https://github.com/actions/github-script
       id: myscript
       with:
         github-token: ${{ github.token }}
         debug: true
         script: |
-          // console.log(JSON.stringify(github, null, 2));
-
-          // console.log(JSON.stringify(github.git, null, 2));
-          // => {}
-          // console.log(JSON.stringify(github.event, null, 2));
-          // => undefined
-
           // "context" https://github.com/actions/toolkit/blob/main/packages/github/src/context.ts
-          console.log(JSON.stringify(context.eventName, null, 2));
-          console.log(JSON.stringify(context.ref, null, 2));
-          console.log(JSON.stringify(context.sha, null, 2));
-          console.log(JSON.stringify(context.payload.commits, null, 2));
+          console.log(context.eventName);
+          console.log(context.ref);
+          console.log(context.sha);
+          console.log(context.payload.commits);
           console.log("---------duuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuump---------")
           console.log(context);
           return context.payload.commits[0].message
 
     - run: |
         echo "${{ steps.myscript.outputs.result }}"
+        # check if the commit message is "Bump" merged commit or not.
         exit 1
 
   build_binaries:
