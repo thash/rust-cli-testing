@@ -1,6 +1,6 @@
 [package]
 name = "tergrrs"
-version = "0.2.2"
+version = "0.2.3"
 authors = ["thash <hash@hzl.jp>"]
 edition = "2018"
 
