@@ -23,6 +23,7 @@ jobs:
     - name: confirm version match
       shell: bash
       run: |
-        echo "Hello, version ${{ github.event.inputs.new_release_version }}!"
-  
+        echo "Manually entered version: ${{ github.event.inputs.new_release_version }}"
+        echo "Cargo.toml contains version: ${{ github.event.inputs.new_release_version }}!"
+        if [[ ${{ github.event.inputs.new_release_version }} != ${{ env.CLI_VERSION }} ]]; then exit 1; fi
   
