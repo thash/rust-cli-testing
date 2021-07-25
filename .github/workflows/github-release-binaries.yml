@@ -36,7 +36,7 @@ jobs:
     - run: |
         echo "${{ steps.myscript.outputs.result }}"
         # check if the commit message is "Bump" merged commit or not.
-        exit 1
+        exit 0
 
   build_binaries:
     runs-on: ${{ matrix.os }}
