@@ -29,11 +29,19 @@ jobs:
         echo "Cargo.toml contains current version: ${{ env.CURRENT_CLI_VERSION }}."
         echo "... will be updated to the manually entered new version: ${{ github.event.inputs.new_release_version }}."
         # if [[ ${{ github.event.inputs.new_release_version }} == ${{ env.CURRENT_CLI_VERSION }} ]]; then exit 1; fi
-    - run: grep -A 2 ${{ env.PROJECT_NAME }} Cargo.lock
+    - name: Check versions defined in Cargo.*
+      run: |
+      grep -e "^version = " Cargo.toml
+      grep -A 2 ${{ env.PROJECT_NAME }} Cargo.lock
+    - name: Replace Cargo.toml version to ${{ github.event.inputs.new_release_version }}
+      run: |
+        sed -i -e 's/^version = "[0-9]\+\.[0-9]\+\.[0-9]\+"/version = "${{ github.event.inputs.new_release_version }}"/' Cargo.toml
     - name: Execute cargo build to update Cargo.lock
       uses: actions-rs/cargo@v1
       with:
         command: build
         args: --release
-    - run: grep -A 2 ${{ env.PROJECT_NAME }} Cargo.lock
-  
+    - name: Check versions defined in Cargo.*
+      run: |
+      grep -e "^version = " Cargo.toml
+      grep -A 2 ${{ env.PROJECT_NAME }} Cargo.lock
