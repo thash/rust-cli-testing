@@ -1,4 +1,5 @@
 on:
+  # TODO: "invoke only when the commit is created through version up PR"
   # pull_request:
   push:
     # direct push to the main branch should be protected by a rule. Expecting PR is made to change main, including release.
@@ -68,11 +69,15 @@ jobs:
     - name: Build release binary
       run: ${{ env.CARGO }} build --verbose --release ${{ env.TARGET_FLAGS }}
     - name: Retrieve CLI_VERSION from Cargo.toml
+      id: retrieve_cli_version
       shell: bash
       run: |
         CLI_VERSION=$(grep "version =" Cargo.toml | sed -e 's/.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/g')
-        echo "CLI_VERSION=${CLI_VERSION}" >> $GITHUB_ENV
         echo "CLI_VERSION retrieved from Cargo.toml is: ${CLI_VERSION}"
+        # set for subsequent steps
+        echo "CLI_VERSION=${CLI_VERSION}" >> $GITHUB_ENV
+        # set for subsequent jobs
+        echo "::set-output name=cli_version::${CLI_VERSION}"
     - name: Append CLI_VERSION and build target to the binary name
       shell: bash
       run: |
@@ -88,10 +93,13 @@ jobs:
         name: cli-binaries
         if-no-files-found: error
         path: ${{ env.TARGET_DIR }}/release/tergrrs-v${{ env.CLI_VERSION }}-*
+    outputs:
+      cli_version: ${{ steps.retrieve_cli_version.outputs.cli_version }}
 
   create_release_tag:
     runs-on: ubuntu-latest
     needs: [build_binaries]
+    if: ${{ needs.build_binaries.outputs.cli_version != '' }}
     steps:
     - name: Checkout
       uses: actions/checkout@v2
@@ -103,7 +111,7 @@ jobs:
           github.git.createRef({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            ref: "refs/tags/v${{ env.CLI_VERSION }}",
+            ref: "refs/tags/v${{ needs.build_binaries.outputs.cli_version }}",
             sha: context.sha
           })
 
@@ -128,4 +136,4 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         files: |
-          tergrrs-v${{ env.CLI_VERSION }}-*
+          tergrrs-v${{ needs.build_binaries.outputs.cli_version }}-*
