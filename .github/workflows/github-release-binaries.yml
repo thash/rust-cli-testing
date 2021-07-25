@@ -1,8 +1,12 @@
 on:
-  pull_request:
+  # pull_request:
   push:
-    tags:
-    - "v[0-9]+.[0-9]+.[0-9]+"
+    # direct push to the main branch should be protected by a rule. Expecting PR is made to change main, including release.
+    # https://docs.github.com/en/github/administering-a-repository/defining-the-mergeability-of-pull-requests/managing-a-branch-protection-rule
+    branches:
+    - main
+    # tags:
+    # - "v[0-9]+.[0-9]+.[0-9]+"
 
 jobs:
   build_binaries:
