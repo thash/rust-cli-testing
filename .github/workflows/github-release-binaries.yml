@@ -133,15 +133,14 @@ jobs:
     #     echo "CLI_VERSION=${CLI_VERSION}" >> $GITHUB_ENV
     #     # set for subsequent jobs
     #     echo "::set-output name=cli_version::${CLI_VERSION}"
-    # - name: Append CLI_VERSION and build target to the binary name
-    #   shell: bash
-    #   run: |
-    #     mv ${{ env.TARGET_DIR }}/release/tergrrs \
-    #        ${{ env.TARGET_DIR }}/release/tergrrs-v${{ env.CLI_VERSION }}-${{ matrix.target }}
+    - name: Rename binary name with target
+      shell: bash
+      run: |
+        mv ${{ env.TARGET_DIR }}/release/tergrrs \
+           ${{ env.TARGET_DIR }}/release/tergrrs-${{ matrix.target }}
     - name: Check target/${{ matrix.target }}/release/
       shell: bash
       run: |
-        ls -l $TARGET_DIR/release/
         ls -l ${{ env.TARGET_DIR}}/release/
     # - name: Store the built binary as an artifact
     #   uses: actions/upload-artifact@v2
@@ -155,11 +154,11 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: v${{ needs.build_binaries.outputs.cli_version }}
+        # tag_name: v${{ needs.build_binaries.outputs.cli_version }}
         body: |
-          Changes ... this should be filled automatically
+          TBU
         files: |
-          ${{ env.TARGET_DIR }}/release/tergrrs*
+          ${{ env.TARGET_DIR }}/release/tergrrs-*
     # outputs:
     #   cli_version: ${{ steps.retrieve_cli_version.outputs.cli_version }}
 
