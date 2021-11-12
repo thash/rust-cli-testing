@@ -1,0 +1,2 @@
+TODO: Using previously merged pull requests, generate "changelog" text that can be used to this PR body. Then, reuse it for the release note as well.
+# TODO: "invoke only when the commit is created through version up PR" ... check latest commit message?

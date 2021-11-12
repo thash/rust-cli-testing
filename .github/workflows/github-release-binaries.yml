@@ -12,84 +12,100 @@ on:
   #   # - "v[0-9]+.[0-9]+.[0-9]+"
 
 jobs:
-  check_if_release_pull_request:
-    runs-on: ubuntu-latest
+  # check_if_release_pull_request:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - name: Checkout
+  #     uses: actions/checkout@v2
+  #   - uses: actions/github-script@v3
+  #     # see details /docs https://github.com/actions/github-script
+  #     id: myscript
+  #     with:
+  #       github-token: ${{ github.token }}
+  #       debug: true
+  #       script: |
+  #         // "context" https://github.com/actions/toolkit/blob/main/packages/github/src/context.ts
+  #         console.log(context.eventName);
+  #         console.log(context.ref);
+  #         console.log(context.sha);
+  #         console.log(context.payload.commits);
+  #         console.log("---------duuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuump---------")
+  #         console.log(context);
+  #         return context.payload.commits[0].message
+
+  #   - name: Check if the (latest) commit is release version up commit
+  #     shell: bash
+  #     run: |
+  #       echo "${{ steps.myscript.outputs.result }}"
+  #       echo $?
+  #       # if [[ ${{ steps.myscript.outputs.result }} =~ [workflow] Bump version to v =  ]]; then
+  #       [[ ${{ steps.myscript.outputs.result }} =~ workflow ]]
+  #       echo $?
+  #       if [[ ${{ steps.myscript.outputs.result }} =~ workflow ]]; then
+  #         echo "commit message match"
+  #       else
+  #         exit 1
+  #       fi
+  #       exit 0
+
+  toolchain:
+    runs-on: ubuntu-latest   
+    outputs:
+      rust_toolchain: ${{ steps.retrieve_toolchain.outputs.rust_toolchain }}
     steps:
     - name: Checkout
       uses: actions/checkout@v2
-    - uses: actions/github-script@v3
-      # see details /docs https://github.com/actions/github-script
-      id: myscript
-      with:
-        github-token: ${{ github.token }}
-        debug: true
-        script: |
-          // "context" https://github.com/actions/toolkit/blob/main/packages/github/src/context.ts
-          console.log(context.eventName);
-          console.log(context.ref);
-          console.log(context.sha);
-          console.log(context.payload.commits);
-          console.log("---------duuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuump---------")
-          console.log(context);
-          return context.payload.commits[0].message
-
-    - name: Check if the (latest) commit is release version up commit
+    - name: Retrieve rust-toolchain content
+      id: retrieve_toolchain
       shell: bash
       run: |
-        echo "${{ steps.myscript.outputs.result }}"
-        echo $?
-        # if [[ ${{ steps.myscript.outputs.result }} =~ [workflow] Bump version to v =  ]]; then
-        [[ ${{ steps.myscript.outputs.result }} =~ workflow ]]
-        echo $?
-        if [[ ${{ steps.myscript.outputs.result }} =~ workflow ]]; then
-          echo "commit message match"
-        else
-          exit 1
-        fi
-        exit 0
+        RUST_TOOLCHAIN=$(cat rust-toolchain | tr -d '\n')
+        # set for subsequent jobs
+        echo "::set-output name=rust_toolchain::${RUST_TOOLCHAIN}"
 
   build_binaries:
     runs-on: ${{ matrix.os }}
-    needs: [check_if_release_pull_request]
+    # needs: [check_if_release_pull_request]
+    needs: toolchain
     env:
       # Dump backtrace on panic
       RUST_BACKTRACE: 1
     strategy:
       matrix:
-        # build: [linux, linux-arm, macos, win-msvc, win-gnu, win32-msvc]
-        build: [linux]
+        # NOTE: Apple M1 is not yet supported: https://github.com/actions/virtual-environments/issues/2187
+        build: [linux, linux-arm, macos, win-msvc, win-gnu, win32-msvc]
         include:
         - build: linux
           os: ubuntu-18.04
-          rust: nightly
+          # rust: nightly
           target: x86_64-unknown-linux-musl
-        # - build: linux-arm
-        #   os: ubuntu-18.04
-        #   rust: nightly
-        #   target: arm-unknown-linux-gnueabihf
-        # - build: macos
-        #   os: macos-latest
-        #   rust: nightly
-        #   target: x86_64-apple-darwin
-        # - build: win-msvc
-        #   os: windows-2019
-        #   rust: nightly
-        #   target: x86_64-pc-windows-msvc
-        # - build: win-gnu
-        #   os: windows-2019
-        #   rust: nightly-x86_64-gnu
-        #   target: x86_64-pc-windows-gnu
-        # - build: win32-msvc
-        #   os: windows-2019
-        #   rust: nightly
-        #   target: i686-pc-windows-msvc
+        - build: linux-arm
+          os: ubuntu-18.04
+          # rust: nightly
+          target: arm-unknown-linux-gnueabihf
+        - build: macos
+          os: macos-latest
+          # rust: nightly
+          target: x86_64-apple-darwin
+        - build: win-msvc
+          os: windows-2019
+          # rust: nightly
+          target: x86_64-pc-windows-msvc
+        - build: win-gnu
+          os: windows-2019
+          # rust: nightly-x86_64-gnu
+          target: x86_64-pc-windows-gnu
+        - build: win32-msvc
+          os: windows-2019
+          # rust: nightly
+          target: i686-pc-windows-msvc
     steps:
     - name: Checkout
       uses: actions/checkout@v2
     - name: Install Rust
       uses: actions-rs/toolchain@v1
       with:
-        toolchain: ${{ matrix.rust }}
+        toolchain: ${{ needs.toolchain.outputs.rust_toolchain }} # retrieved from rust-toolchain file
         profile: minimal
         override: true
         target: ${{ matrix.target }}
