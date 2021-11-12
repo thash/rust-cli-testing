@@ -3,15 +3,39 @@ on:
   # pull_request:
   #   branches:
   #   - main
-  push:
-    # direct push to the main branch should be protected by a rule. Expecting PR is made to change main, including release.
-    # https://docs.github.com/en/github/administering-a-repository/defining-the-mergeability-of-pull-requests/managing-a-branch-protection-rule
-    branches:
-    - main
-    tags:
-    - "v[0-9]+.[0-9]+.[0-9]+"
+  release:
+    types: [created]
+  ### push:
+  ###   # direct push to the main branch should be protected by a rule. Expecting PR is made to change main, including release.
+  ###   # https://docs.github.com/en/github/administering-a-repository/defining-the-mergeability-of-pull-requests/managing-a-branch-protection-rule
+  ###   branches:
+  ###   - main
+  ###   tags:
+  ###   - "v[0-9]+.[0-9]+.[0-9]+"
 
 jobs:
+  release:
+    name: release ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-pc-windows-gnu
+            archive: zip
+          - target: x86_64-unknown-linux-musl
+            archive: tar.gz
+          - target: x86_64-apple-darwin
+            archive: zip
+    steps:
+      - uses: actions/checkout@master
+      - name: Compile and release
+        uses: rust-build/rust-build.action@latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUSTTARGET: ${{ matrix.target }}
+          ARCHIVE_TYPES: ${{ matrix.archive }}
+
   # check_if_release_pull_request:
   #   runs-on: ubuntu-latest
   #   steps:
@@ -48,119 +72,119 @@ jobs:
   #       fi
   #       exit 0
 
-  toolchain:
-    runs-on: ubuntu-latest   
-    outputs:
-      rust_toolchain: ${{ steps.retrieve_toolchain.outputs.rust_toolchain }}
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name: Retrieve rust-toolchain content
-      id: retrieve_toolchain
-      shell: bash
-      run: |
-        RUST_TOOLCHAIN=$(cat rust-toolchain | tr -d '\n')
-        # set for subsequent jobs
-        echo "::set-output name=rust_toolchain::${RUST_TOOLCHAIN}"
+  ### toolchain:
+  ###   runs-on: ubuntu-latest   
+  ###   outputs:
+  ###     rust_toolchain: ${{ steps.retrieve_toolchain.outputs.rust_toolchain }}
+  ###   steps:
+  ###   - name: Checkout
+  ###     uses: actions/checkout@v2
+  ###   - name: Retrieve rust-toolchain content
+  ###     id: retrieve_toolchain
+  ###     shell: bash
+  ###     run: |
+  ###       RUST_TOOLCHAIN=$(cat rust-toolchain | tr -d '\n')
+  ###       # set for subsequent jobs
+  ###       echo "::set-output name=rust_toolchain::${RUST_TOOLCHAIN}"
 
-  build_binaries:
-    runs-on: ${{ matrix.os }}
-    # needs: [check_if_release_pull_request]
-    needs: toolchain
-    env:
-      # Dump backtrace on panic
-      RUST_BACKTRACE: 1
-    strategy:
-      matrix:
-        # NOTE: Apple M1 is not yet supported: https://github.com/actions/virtual-environments/issues/2187
-        build: [linux, linux-arm, macos, win-msvc, win32-msvc] # removed 'win-gnu'
-        include:
-        - build: linux
-          os: ubuntu-18.04
-          # rust: nightly
-          target: x86_64-unknown-linux-musl
-        - build: linux-arm
-          os: ubuntu-18.04
-          # rust: nightly
-          target: arm-unknown-linux-gnueabihf
-        - build: macos
-          os: macos-latest
-          # rust: nightly
-          target: x86_64-apple-darwin
-        - build: win-msvc
-          os: windows-2019
-          # rust: nightly
-          target: x86_64-pc-windows-msvc
-        # - build: win-gnu
-        #   os: windows-2019
-        #   rust: nightly-x86_64-gnu
-        #   target: x86_64-pc-windows-gnu
-        - build: win32-msvc
-          os: windows-2019
-          # rust: nightly
-          target: i686-pc-windows-msvc
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name: Install Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: ${{ needs.toolchain.outputs.rust_toolchain }} # retrieved from rust-toolchain file
-        profile: minimal
-        override: true
-        target: ${{ matrix.target }}
-    - name: Install and configure cross
-      shell: bash
-      run: |
-        cargo install cross
-        echo "CARGO=cross" >> $GITHUB_ENV
-        echo "TARGET_FLAGS=--target ${{ matrix.target }}" >> $GITHUB_ENV
-        echo "TARGET_DIR=./target/${{ matrix.target }}" >> $GITHUB_ENV
-    # - name: Check configurations for Cargo
-    #   run: |
-    #     echo "cargo command is: ${{ env.CARGO }}"
-    #     echo "target flag is: ${{ env.TARGET_FLAGS }}"
-    #     echo "target dir is: ${{ env.TARGET_DIR }}"
-    - name: Build release binary
-      run: ${{ env.CARGO }} build --verbose --release ${{ env.TARGET_FLAGS }}
-    # - name: Retrieve CLI_VERSION from Cargo.toml
-    #   id: retrieve_cli_version
-    #   shell: bash
-    #   run: |
-    #     CLI_VERSION=$(grep "version =" Cargo.toml | sed -e 's/.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/g')
-    #     echo "CLI_VERSION retrieved from Cargo.toml is: ${CLI_VERSION}"
-    #     # set for subsequent steps
-    #     echo "CLI_VERSION=${CLI_VERSION}" >> $GITHUB_ENV
-    #     # set for subsequent jobs
-    #     echo "::set-output name=cli_version::${CLI_VERSION}"
-    - name: Rename binary name with target
-      shell: bash
-      run: |
-        mv ${{ env.TARGET_DIR }}/release/tergrrs \
-           ${{ env.TARGET_DIR }}/release/tergrrs-${{ matrix.target }}
-    - name: Check target/${{ matrix.target }}/release/
-      shell: bash
-      run: |
-        ls -l ${{ env.TARGET_DIR}}/release/
-    # - name: Store the built binary as an artifact
-    #   uses: actions/upload-artifact@v2
-    #   with:
-    #     name: cli-binaries
-    #     if-no-files-found: error
-    #     path: ${{ env.TARGET_DIR }}/release/tergrrs-v${{ env.CLI_VERSION }}-*
-    - name: Release
-      uses: softprops/action-gh-release@v1
-      if: startsWith( github.ref, 'refs/tags/v' )
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        # tag_name: v${{ needs.build_binaries.outputs.cli_version }}
-        body: |
-          TBU
-        files: |
-          ${{ env.TARGET_DIR }}/release/tergrrs-*
-    # outputs:
-    #   cli_version: ${{ steps.retrieve_cli_version.outputs.cli_version }}
+  ### build_binaries:
+  ###   runs-on: ${{ matrix.os }}
+  ###   # needs: [check_if_release_pull_request]
+  ###   needs: toolchain
+  ###   env:
+  ###     # Dump backtrace on panic
+  ###     RUST_BACKTRACE: 1
+  ###   strategy:
+  ###     matrix:
+  ###       # NOTE: Apple M1 is not yet supported: https://github.com/actions/virtual-environments/issues/2187
+  ###       build: [linux, linux-arm, macos, win-msvc, win32-msvc] # removed 'win-gnu'
+  ###       include:
+  ###       - build: linux
+  ###         os: ubuntu-18.04
+  ###         # rust: nightly
+  ###         target: x86_64-unknown-linux-musl
+  ###       - build: linux-arm
+  ###         os: ubuntu-18.04
+  ###         # rust: nightly
+  ###         target: arm-unknown-linux-gnueabihf
+  ###       - build: macos
+  ###         os: macos-latest
+  ###         # rust: nightly
+  ###         target: x86_64-apple-darwin
+  ###       - build: win-msvc
+  ###         os: windows-2019
+  ###         # rust: nightly
+  ###         target: x86_64-pc-windows-msvc
+  ###       # - build: win-gnu
+  ###       #   os: windows-2019
+  ###       #   rust: nightly-x86_64-gnu
+  ###       #   target: x86_64-pc-windows-gnu
+  ###       - build: win32-msvc
+  ###         os: windows-2019
+  ###         # rust: nightly
+  ###         target: i686-pc-windows-msvc
+  ###   steps:
+  ###   - name: Checkout
+  ###     uses: actions/checkout@v2
+  ###   - name: Install Rust
+  ###     uses: actions-rs/toolchain@v1
+  ###     with:
+  ###       toolchain: ${{ needs.toolchain.outputs.rust_toolchain }} # retrieved from rust-toolchain file
+  ###       profile: minimal
+  ###       override: true
+  ###       target: ${{ matrix.target }}
+  ###   - name: Install and configure cross
+  ###     shell: bash
+  ###     run: |
+  ###       cargo install cross
+  ###       echo "CARGO=cross" >> $GITHUB_ENV
+  ###       echo "TARGET_FLAGS=--target ${{ matrix.target }}" >> $GITHUB_ENV
+  ###       echo "TARGET_DIR=./target/${{ matrix.target }}" >> $GITHUB_ENV
+  ###   - name: Check configurations for Cargo
+  ###     run: |
+  ###       echo "cargo command is: ${{ env.CARGO }}"
+  ###       echo "target flag is: ${{ env.TARGET_FLAGS }}"
+  ###       echo "target dir is: ${{ env.TARGET_DIR }}"
+  ###   - name: Build release binary
+  ###     run: ${{ env.CARGO }} build --verbose --release ${{ env.TARGET_FLAGS }}
+  ###   # - name: Retrieve CLI_VERSION from Cargo.toml
+  ###   #   id: retrieve_cli_version
+  ###   #   shell: bash
+  ###   #   run: |
+  ###   #     CLI_VERSION=$(grep "version =" Cargo.toml | sed -e 's/.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/g')
+  ###   #     echo "CLI_VERSION retrieved from Cargo.toml is: ${CLI_VERSION}"
+  ###   #     # set for subsequent steps
+  ###   #     echo "CLI_VERSION=${CLI_VERSION}" >> $GITHUB_ENV
+  ###   #     # set for subsequent jobs
+  ###   #     echo "::set-output name=cli_version::${CLI_VERSION}"
+  ###   - name: Rename binary name with target
+  ###     shell: bash
+  ###     run: |
+  ###       mv ${{ env.TARGET_DIR }}/release/tergrrs \
+  ###          ${{ env.TARGET_DIR }}/release/tergrrs-${{ matrix.target }}
+  ###   - name: Check target/${{ matrix.target }}/release/
+  ###     shell: bash
+  ###     run: |
+  ###       ls -l ${{ env.TARGET_DIR}}/release/
+  ###   # - name: Store the built binary as an artifact
+  ###   #   uses: actions/upload-artifact@v2
+  ###   #   with:
+  ###   #     name: cli-binaries
+  ###   #     if-no-files-found: error
+  ###   #     path: ${{ env.TARGET_DIR }}/release/tergrrs-v${{ env.CLI_VERSION }}-*
+  ###   - name: Create a release with the binary file
+  ###     uses: softprops/action-gh-release@v1
+  ###     if: startsWith( github.ref, 'refs/tags/v' )
+  ###     env:
+  ###       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  ###     with:
+  ###       # tag_name: v${{ needs.build_binaries.outputs.cli_version }}
+  ###       body: |
+  ###         TBU
+  ###       files: |
+  ###         ${{ env.TARGET_DIR }}/release/tergrrs-*
+  ###   # outputs:
+  ###   #   cli_version: ${{ steps.retrieve_cli_version.outputs.cli_version }}
 
   # create_release_tag:
   #   runs-on: ubuntu-latest
